@@ -1,52 +1,135 @@
 /*
- * Использование очереди для выполнения группы заданий
- * Пример выходных данных:
- * + c 5 6
- * - v 3 9 8 7 1 2 3
- *
+ * В начале программы предлагается выбрать режим работы программы:
+ * (l - списки, s - стек, q - очередь).
+ * Формат входных данных для списков и очереди:
+ * + c 0.5 -9
+ * - v 3 5.5 4 3 3 8 7 6
+ * Формат входных данных для стека:
+ * 2 3 + 1 - 2 ^ n
+ * 7 2 * 1 + n
+ * (в конце каждой строки прописывается "n")
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 
-// структура для элемента очереди
-typedef struct data {
-	char *elem;
-	struct data *next;
-} data;
-
-// структура для очереди
-typedef struct queue_t {
-	data *head;
-	data *tail;
-} queue_t;
-
-// инициализация пустой очереди
-queue_t init_queue() {
-	queue_t queue; // создаём очередь
-	queue.head = NULL;
-	queue.tail = NULL;
-	return queue;
-}
-
-void enqueue(queue_t *queue, char *value);
-char* dequeue(queue_t *queue);
-int is_empty(queue_t queue);
-char* read_string(FILE *f1);
-int is_digit(float c);
-int read_int(char *s, int *i);
-double read_double(char *s, int *i);
-double factorial(int f);
-
-void numbers(FILE *output, char *s, char sign);
-void vectors(FILE *output, char *s, char sign);
-void calc(FILE *input, char *s);
+#include "queue.h"
+#include "stack.h"
+#include "list.h"
+#include "math.h"
 
 int main() {
-	char n = 'y';
+	setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(stderr, NULL, _IONBF, 0);
+	char choose;
+	char str[20], t = '0';
+	int i = 0;
+	float num, x, y;
 	char in[20], out[20];
 	FILE *input, *output;
-	while (n == 'y') {
+	stack *head_stack = NULL;
+	printf("l - list, s - stack, q - queue");
+	scanf(" %c", &choose);
+	switch (choose) {
+
+/////////////////////////////////////////////////////
+/////списки
+/////////////////////////////////////////////////////
+	case 'l':
+
+		printf("\nInput file name: ");
+		scanf("%s", in);
+		printf("Output file name: ");
+		scanf("%s", out);
+		input = fopen(in, "r");
+		if (feof(input) == 0) {
+			head = malloc(sizeof(struct list1)); // память для первого элемента списка
+			fscanf(input, " %c", &head->sign);
+			fscanf(input, " %c", &head->choose);
+			if (head->choose == 'v') {
+				fscanf(input, " %i", &head->size);
+			} else {
+				head->size = 1;
+			}
+			if (head->sign != '!') {
+				head->x = add_numb(input, head->size);
+				head->y = add_numb(input, head->size);
+			} else {
+				head->x = add_numb(input, head->size);
+				head->y = NULL;
+			}
+			current = head;
+
+			while (feof(input) == 0) { // добавление элементов списка, пока не закончится файл
+				add_el(current, input);
+				current = current->next;
+
+			}
+			head_res = malloc(sizeof(struct list2)); // память для первого элемента списка для вывода
+			current = head;
+			if (current->choose == 'v') {
+				head_res->res = vect_l(current->sign, current->size, current->x,
+						current->y);
+			} else {
+				head_res->res = numb_l(current->sign, current->x, current->y);
+			}
+			head_res->res_next = NULL;
+			current = current->next;
+			current_res = head_res;
+			while (current != NULL) { // пока элемент списка не последниий
+				res_add_el(current_res, current);
+				// переустановка указателей на следующий элемент
+				current = current->next;
+				current_res = current_res->res_next;
+			}
+			current = head;
+			current_res = head_res;
+			fclose(input);
+			output = fopen(out, "w");
+			while (current != NULL) //запись ответа в output
+			{
+				if (current->choose == 'v') {
+					fprintf(output, "(");
+					for (int i = 0; i < current->size; i++) {
+						fprintf(output, " %.2f", current->x[i]);
+					}
+					fprintf(output, ") %c (", current->sign);
+					for (int i = 0; i < current->size; i++) {
+						fprintf(output, " %.2f", current->y[i]);
+					}
+					fprintf(output, " ) = ");
+					if (current->sign != '*') {
+						fprintf(output, "( ");
+						for (int i = 0; i < current->size; i++) {
+							fprintf(output, "%.2f ", current_res->res[i]);
+						}
+						fprintf(output, ")\n");
+					} else {
+						fprintf(output, "%.2f\n", current_res->res[0]);
+					}
+				} else if (current->choose == 'c') {
+					if (current->sign != '!') {
+						fprintf(output, " %.2f %c %.2f = %.2lf\n",
+								current->x[0], current->sign, current->y[0],
+								current_res->res[0]);
+					} else {
+						fprintf(output, " %.2f %c = %.2lf\n", current->x[0],
+								current->sign, current_res->res[0]);
+					}
+				}
+				current = current->next;
+				current_res = current_res->res_next;
+			}
+			fclose(output);
+		}
+		return 0;
+		break;
+
+/////////////////////////////////////////////////////
+/////очередь
+/////////////////////////////////////////////////////
+	case 'q':
+
 		printf("Enter name to input file: ");
 		scanf("%s", in);
 		input = fopen(in, "r");
@@ -63,195 +146,52 @@ int main() {
 		output = fopen(out, "w");
 
 		while (!is_empty(queue)) { // пока не кончится очередь
-			calc(output, dequeue(&queue)); // вычисляем выражение
+			calc_q(output, dequeue(&queue)); // вычисляем выражение
 		}
 		fclose(output);
-		printf("do you want to continue? (y/n)");
-		scanf("%s", &n);
-	}
-	return 0;
-}
+		return 0;
+		break;
 
-// добавление элемента в конец очереди
-void enqueue(queue_t *queue, char *value) {
-	data *node = (data*) malloc(sizeof(data));
-	node->elem = value;
+/////////////////////////////////////////////////////
+/////стек
+/////////////////////////////////////////////////////
+	case 's':
+		printf("Enter name of input file:");
+		scanf(" %s", in);
+		printf("Enter name of output file:");
+		scanf(" %s", out);
+		input = fopen(in, "r");
+		output = fopen(out, "w");
+		while (feof(input) == 0) {
+			fscanf(input, "%c", &str[i]);
+			if (str[i] == ' ') {
+				if (t == '0') {
+					num = strtof(str, NULL); // разделяет строку на отдельные элементы
+					push_element(&head_stack, num);
+					i = 0;
 
-	node->next = NULL;
-	if (queue->tail == NULL) {
-		queue->head = node;
-	} else {
-		queue->tail->next = node;
-	}
-	queue->tail = node;
-}
-
-// удаление элемента из очереди
-char* dequeue(queue_t *queue) {
-	char *elem = queue->head->elem;
-
-	data *tmp = queue->head;
-	queue->head = queue->head->next;
-	free(tmp);
-	if (queue->head == NULL) {
-		queue->tail = NULL;
-	}
-
-	return elem;
-}
-
-// проверка очереди на пустоту
-int is_empty(queue_t queue) {
-	return queue.head == NULL;
-}
-
-// считывание строки из файла
-char* read_string(FILE *input) {
-	int size = 0; // размер строки
-	int len = 1; // ёмкость строки
-	char *s = (char*) malloc(len * sizeof(char));
-	for (char c = fgetc(input); !feof(input) && c != '\n'; c = fgetc(input)) {
-		s[size++] = c;
-		if (size >= len) { // если ёмкости недостаточно
-			len *= 2; // увеличиваем её в 2 раза
-			s = (char*) realloc(s, len * sizeof(char)); // и перераспределяем память
-		}
-	}
-
-	s[size] = '\0';
-
-	return s;
-}
-
-// проверка на цифру
-int is_digit(float c) {
-	return (c >= '0' && c <= '9');
-}
-
-// ввод числа из строки
-int read_int(char *s, int *i) {
-	int value = 0;
-
-	while (s[*i] == ' ')
-		(*i)++;
-
-	while (s[*i] && is_digit(s[*i]))
-		value = value * 10 + s[(*i)++] - '0';
-
-	return value;
-}
-
-double read_double(char *s, int *i) {
-	while (s[*i] == ' ')
-		(*i)++;
-
-	int start = *i;
-
-	while (s[*i] && (is_digit(s[*i]) || s[*i] == '.'))
-		(*i)++;
-
-	char prev = s[*i];
-	s[*i] = '\0';
-	double value = atof(s + start); // переводим строку в число
-	s[*i] = prev;
-
-	return value;
-}
-
-double factorial(int f) {
-	double fact = 1;
-
-	for (int i = 2; i <= f; i++)
-		fact *= i;
-
-	return fact;
-}
-
-void numbers(FILE *output, char *s, char sign) {
-	int index = 3;
-
-	if (sign == '!') {
-		int x = read_int(s, &index);
-		fprintf(output, "%.0lf\n", factorial(x));
-		return;
-	}
-
-	double x = read_double(s, &index);
-	double y = read_double(s, &index);
-
-	if (sign == '+') {
-		fprintf(output, "%.2lf\n", x + y);
-	} else if (sign == '-') {
-		fprintf(output, "%.2lf\n", x - y);
-	} else if (sign == '*') {
-		fprintf(output, "%.2lf\n", x * y);
-	} else if (sign == '/') {
-		if (y == 0)
-			fprintf(output, "division by zero\n");
-		else
-			fprintf(output, "%.2lf\n", (double) x / y);
-	} else if (sign == '^') {
-
-		float S = 1;
-		for (int i = 1; i <= y; i++) {
-			S *= x;
-		}
-		fprintf(output, "%.2lf\n", S);
-	}
-
-	else {
-		fprintf(output, "unknown operation '%c'\n", sign);
-	}
-}
-
-void vectors(FILE *output, char *s, char sign) {
-	int index = 3;
-	int n = read_int(s, &index); // размерность вектора
-
-	double *v1 = (double*) malloc(n * sizeof(double));
-	double *v2 = (double*) malloc(n * sizeof(double));
-
-	// считываем вектора
-	for (int i = 0; i < n; i++)
-		v1[i] = read_double(s, &index);
-
-	for (int i = 0; i < n; i++)
-		v2[i] = read_double(s, &index);
-
-	if (sign == '*') {
-		double res = 0;
-
-		for (int i = 0; i < n; i++)
-			res += v1[i] * v2[i];
-
-		fprintf(output, "%.2lf\n", res);
-	} else if (sign == '+' || sign == '-') {
-		if (sign == '+') {
-			for (int i = 0; i < n; i++)
-				fprintf(output, "%.2lf ", v1[i] + v2[i]);
-			fprintf(output, "\n");
-		} else {
-			for (int i = 0; i < n; i++)
-				fprintf(output, "%.2lf ", v1[i] - v2[i]);
-			fprintf(output, "\n");
+				}
+			} else if (str[i] == '*' || str[i] == '+' || str[i] == '-'
+					|| str[i] == '/' || str[i] == '^') {
+				y = pop_element(&head_stack);
+				x = pop_element(&head_stack);
+				push_element(&head_stack, numb_s(str[i], x, y));
+				fprintf(output, "%.2f  ", numb_s(str[i], x, y));
+				t = '1';
+			} else if (str[i] == 'n') {
+				while (head_stack != NULL)
+					pop_element(&head_stack);
+				fprintf(output, "\n");
+			} else {
+				t = '0';
+				i = i + 1;
+			}
 		}
 
-	} else {
-		fprintf(output, "unknown operation '%c'\n", sign);
+		fclose(input);
+		fclose(output);
+		return 0;
+		break;
 	}
 
-	free(v1);
-	free(v2);
-}
-
-// вычисление значения выражения
-void calc(FILE *input, char *s) {
-	char sign = s[0];
-	char op = s[2];
-
-	if (op == 'c') {
-		numbers(input, s, sign);
-	} else if (op == 'v') {
-		vectors(input, s, sign);
-	}
 }
